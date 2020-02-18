@@ -1,7 +1,7 @@
 use super::image;
 
 fn header(width: u32, height: u32) -> String {
-    format!("P3 {} {} 255", width.to_string(), height.to_string())
+    format!("P3 {} {} 255", height.to_string(), width.to_string())
 }
 
 fn pixelmap_to_string(image: &image::Image) -> String {
@@ -14,7 +14,7 @@ fn pixelmap_to_string(image: &image::Image) -> String {
                 ppm_string = format!("{} {} {}\n",
                     pixel.get_red(), pixel.get_green(), pixel.get_blue());
             } else {
-                ppm_string = format!("{} {} {} {}\n",
+                ppm_string = format!("{}{} {} {}\n",
                     ppm_string, pixel.get_red(), pixel.get_green(), pixel.get_blue());
             }
         }

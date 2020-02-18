@@ -7,17 +7,37 @@ use std::fs::{OpenOptions};
 use image::{Image, Pixel};
 
 fn main() {
-    let mut img = Image::new(3, 3);
-    img.set(0,0, Pixel::new(255, 0, 0));
-    img.set(0,1, Pixel::new(0, 255, 0));
-    img.set(0,2, Pixel::new(0, 0, 255));
-    img.set(1,0, Pixel::new(255, 255, 255));
-    img.set(2,2, Pixel::new(255, 255, 255));
     println!("Trace all the rays!");
+    let image = draw_gradient(400, 00);
     
-    let ppm_str = ppm::to_ppm_p3_string(&img);
+    let ppm_str = ppm::to_ppm_p3_string(&image);
     write_to_file("output/render.ppm", &ppm_str).unwrap();
-    print!("{}", ppm_str);
+    println!("Rays have been traced!");
+}
+
+fn color_float_to_u8(color: f64) -> u8 {
+    (color * 255.00) as u8
+}
+
+fn draw_gradient(width: u32, height: u32) -> Image {
+    let mut image = Image::new(width, height);
+
+    let height_float = height as f64;
+    let width_float = width as f64;
+
+    let blue = 0.2;
+    let blue_i = color_float_to_u8(blue);
+
+    for x in 0..height {
+        for y in 0..width {
+            let red = y as f64 / width_float;
+            let green = (height - x - 1) as f64 / height_float;
+            let red_i = color_float_to_u8(red);
+            let green_i = color_float_to_u8(green);
+            image.set(x, y, Pixel::new(red_i, green_i, blue_i))
+        }
+    }
+    image
 }
 
 fn write_to_file(filepath: &str, data: &String) -> Result<(),io::Error> {
