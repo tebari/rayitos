@@ -8,7 +8,7 @@ use image::{Image, Pixel};
 
 fn main() {
     println!("Trace all the rays!");
-    let image = draw_gradient(400, 00);
+    let image = draw_gradient(400, 200);
     
     let ppm_str = ppm::to_ppm_p3_string(&image);
     write_to_file("output/render.ppm", &ppm_str).unwrap();
