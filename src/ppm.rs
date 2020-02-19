@@ -10,13 +10,12 @@ fn pixelmap_to_string(image: &image::Image) -> String {
     for x in 0..image.get_height() {
         for y in 0..image.get_width() {
             let pixel = image.get(x, y);
-            if x == 0 && y == 0{
-                ppm_string = format!("{} {} {}\n",
-                    pixel.get_red(), pixel.get_green(), pixel.get_blue());
-            } else {
-                ppm_string = format!("{}{} {} {}\n",
-                    ppm_string, pixel.get_red(), pixel.get_green(), pixel.get_blue());
-            }
+            ppm_string.push_str(&pixel.get_red().to_string());
+            ppm_string.push_str(" ");
+            ppm_string.push_str(&pixel.get_green().to_string());
+            ppm_string.push_str(" ");
+            ppm_string.push_str(&pixel.get_blue().to_string());
+            ppm_string.push_str("\n");
         }
     }
     ppm_string
