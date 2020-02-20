@@ -27,18 +27,25 @@ pub fn draw_gradient(width: u32, height: u32) -> Image {
     image
 }
 
-fn hit_sphere(center: Point3<f64>, radius: f64, ray: &Ray) -> bool {
+fn hit_sphere(center: Point3<f64>, radius: f64, ray: &Ray) -> f64 {
     let oc = ray.origin() - center;
     let a = ray.direction().dot(&ray.direction());
     let b = 2.0 * oc.dot(&ray.direction());
     let c = oc.dot(&oc) - radius.powi(2);
-    let discrimination = b*b - 4.0*a*c;
-    discrimination > 0.0
+    let discriminant = b*b - 4.0*a*c;
+    if discriminant < 0.0 {
+        -1.0
+    } else {
+        (-b - discriminant.sqrt()) / (2.0*a)
+    }
 }
 
 pub fn pixel_from_ray(ray: &Ray) -> Pixel {
-    if hit_sphere(Point3::new(0.0,0.0,-1.0), 0.5, ray) {
-        return Pixel::new(255, 0, 0);
+    let t = hit_sphere(Point3::new(0.0,0.0,-1.0), 0.5, ray);
+    if t > 0.0 {
+        let n = ray.point_at(t) - Vector3::new(0.0,0.0,-1.0);
+        let n_normal = n.coords.normalize();
+        return Pixel::from(0.5 * Vector3::new(n_normal[0]+1.0, n_normal[1]+1.0, n_normal[2]+1.0));
     }
     let unit_direction = ray.direction().normalize();
     let t = 0.5 * (unit_direction[1] + 1.0);
