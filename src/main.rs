@@ -1,6 +1,9 @@
 mod image;
 mod ppm;
 mod renderers;
+mod ray;
+
+extern crate nalgebra as na;
 
 use std::env;
 use std::io::prelude::*;
@@ -19,6 +22,7 @@ fn main() {
 
     let image = match renderer.as_ref() {
         "gradient" => renderers::draw_gradient(width, height),
+        "sky" => renderers::draw_sky(width, height),
         _ => renderers::draw_blank(width, height)
     };
     

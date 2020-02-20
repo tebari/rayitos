@@ -1,3 +1,9 @@
+use na::{Vector3};
+
+pub fn color_float_to_u8(color: f64) -> u8 {
+    (color * 255.00) as u8
+}
+
 pub struct Pixel {
     r: u8,
     g: u8,
@@ -11,6 +17,14 @@ impl Pixel {
             g,
             b,
         }
+    }
+
+    pub fn from(vector: Vector3<f64>) -> Pixel {
+        Pixel::new(
+            color_float_to_u8(vector[0]),
+            color_float_to_u8(vector[1]),
+            color_float_to_u8(vector[2])
+        )
     }
 
     pub fn get_red(&self) -> u8 {
