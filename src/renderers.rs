@@ -28,6 +28,28 @@ pub fn draw_gradient(width: u32, height: u32) -> Image {
     image
 }
 
+struct Camera {
+    origin: Vector3,
+    lower_left_corner: Vector3,
+    horizontal: Vector3,
+    vertical: Vector3,
+}
+
+impl Camera {
+    fn default() -> Camera {
+        Camera {
+            origin: Vector3::new(0.0, 0.0, 0.0),
+            lower_left_corner: Vector3::new(-2.0, -1.0, -1.0),
+            horizontal: Vector3::new(4.0, 0.0, 0.0),
+            vertical: Vector3::new(0.0, 2.0, 0.0)
+        }
+    }
+
+    fn ray(&self, u: f64, v: f64) -> Ray {
+        Ray::new(self.origin, self.lower_left_corner + u*self.horizontal + v*self.vertical)
+    }
+}
+
 pub fn color(ray: &Ray, world: &dyn Hittable) -> Pixel {
     let hit_record = world.hit(ray, 0.0, std::f64::MAX);
     match hit_record {
@@ -44,16 +66,11 @@ pub fn color(ray: &Ray, world: &dyn Hittable) -> Pixel {
 }
 
 pub fn draw_sky(width: u32, height: u32) -> Image {
-    let mut image = Image::new(width, height);
-
-    let origin = Vector3::new(0.0, 0.0, 0.0);
-    let lower_left_corner = Vector3::new(-2.0, -1.0, -1.0);
-    
-    let horizontal = Vector3::new(4.0, 0.0, 0.0);
-    let vertical = Vector3::new(0.0, 2.0, 0.0);
-
     let height_float = height as f64;
     let width_float = width as f64;
+
+    let mut image = Image::new(width, height);
+    let camera = Camera::default();
 
     let world = HittableList::new(vec![
         Box::new(Sphere::new(Vector3::new(0.0, 0.0, -1.0), 0.5)),
@@ -64,7 +81,7 @@ pub fn draw_sky(width: u32, height: u32) -> Image {
         for y in 0..width {
             let u = y as f64 / width_float;
             let v = (height - x - 1) as f64 / height_float;
-            let r = Ray::new(origin, lower_left_corner + u*horizontal + v*vertical);
+            let r = camera.ray(u, v);
             image.set(x, y, color(&r, &world));
         }
     }
