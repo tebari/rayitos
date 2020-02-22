@@ -1,4 +1,4 @@
-use std::ops::{Add, Sub, Mul, Div, Neg};
+use std::ops::{Add, AddAssign, Sub, Mul, Div, Neg};
 
 #[derive(Copy, Clone)]
 pub struct Vector3 {
@@ -66,6 +66,14 @@ impl Add for Vector3 {
             self.v[1] + rhs.v[1],
             self.v[2] + rhs.v[2]
         )
+    }
+}
+
+impl AddAssign for Vector3 {
+    fn add_assign(&mut self, rhs: Vector3) {
+        self.v[0] += rhs.v[0];
+        self.v[1] += rhs.v[1];
+        self.v[2] += rhs.v[2];
     }
 }
 
