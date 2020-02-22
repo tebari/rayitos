@@ -2,8 +2,7 @@ mod image;
 mod ppm;
 mod renderers;
 mod ray;
-
-extern crate nalgebra as na;
+mod vector;
 
 use std::env;
 use std::io::prelude::*;

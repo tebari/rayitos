@@ -1,4 +1,4 @@
-use na::{Vector3};
+use super::vector::Vector3;
 
 pub fn color_float_to_u8(color: f64) -> u8 {
     (color * 255.00) as u8
@@ -19,11 +19,11 @@ impl Pixel {
         }
     }
 
-    pub fn from(vector: Vector3<f64>) -> Pixel {
+    pub fn from(vector: Vector3) -> Pixel {
         Pixel::new(
-            color_float_to_u8(vector[0]),
-            color_float_to_u8(vector[1]),
-            color_float_to_u8(vector[2])
+            color_float_to_u8(vector.x()),
+            color_float_to_u8(vector.y()),
+            color_float_to_u8(vector.z())
         )
     }
 
