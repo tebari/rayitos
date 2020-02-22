@@ -3,6 +3,7 @@ mod ppm;
 mod renderers;
 mod ray;
 mod vector;
+mod hittables;
 
 use std::env;
 use std::io::prelude::*;
