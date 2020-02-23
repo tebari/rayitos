@@ -1,5 +1,5 @@
-use super::vector::Vector3;
-use super::ray::Ray;
+use crate::vector::Vector3;
+use crate::ray::Ray;
 pub struct HitRecord {
     pub t: f64,
     pub p: Vector3,

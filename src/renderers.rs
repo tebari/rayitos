@@ -1,7 +1,7 @@
-use super::ray::Ray;
-use super::image::{Image, Pixel, color_float_to_u8};
-use super::vector::Vector3;
-use super::hittables::{Hittable, HittableList, Sphere};
+use crate::ray::Ray;
+use crate::image::{Image, Pixel, color_float_to_u8};
+use crate::vector::Vector3;
+use crate::hittables::{Hittable, HittableList, Sphere};
 use rand::{Rng, thread_rng};
 
 pub fn draw_blank(width: u32, height: u32) -> Image {

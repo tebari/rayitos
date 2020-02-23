@@ -1,10 +1,4 @@
-mod image;
-mod ppm;
-mod renderers;
-mod ray;
-mod vector;
-mod hittables;
-
+use rayitolib::{renderers, ppm};
 use std::env;
 use std::io::prelude::*;
 use std::io;

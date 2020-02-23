@@ -1,4 +1,4 @@
-use super::image;
+use crate::image;
 
 fn header(width: u32, height: u32) -> String {
     format!("P3 {} {} 255", height.to_string(), width.to_string())

@@ -1,4 +1,4 @@
-use super::vector::Vector3;
+use crate::vector::Vector3;
 
 pub fn color_float_to_u8(color: f64) -> u8 {
     (color * 255.00) as u8

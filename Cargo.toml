@@ -8,3 +8,11 @@ edition = "2018"
 
 [dependencies]
 rand = "0.7"
+
+[lib]
+name = "rayitolib"
+path = "src/lib.rs"
+
+[[bin]]
+name = "rayitos"
+path = "src/main.rs"
