@@ -1,7 +1,7 @@
 use crate::ray::Ray;
 use crate::image::{Image, Pixel, color_float_to_u8};
 use crate::vector::Vector3;
-use crate::hittables::{Hittable, HittableList, Sphere, Lambertian};
+use crate::hittables::{Hittable, HittableList, Sphere, Lambertian, Metal};
 use crate::rng::random_f64;
 
 pub fn draw_blank(width: u32, height: u32) -> Image {
@@ -55,9 +55,9 @@ fn color(ray: &Ray, world: &dyn Hittable, depth: u8) -> Vector3 {
     let hit_record = world.hit(ray, 0.001, std::f64::MAX);
     match hit_record {
         Some(rec) => {
-            let (attenuation, scattered) = rec.material.scatter(ray, &rec);
-            if depth < 50 {
-                return (*attenuation) * color(&scattered, world, depth+1);
+            let (attenuation, scattered, scatter) = rec.material.scatter(ray, &rec);
+            if scatter && depth < 50 {
+                return attenuation * color(&scattered, world, depth+1);
             } else {
                 return Vector3::new(0.0,0.0,0.0)
             }
@@ -89,6 +89,16 @@ pub fn draw_sky(width: u32, height: u32) -> Image {
             Vector3::new(0.0, -100.5, -1.0),
             100.0,
             Box::new(Lambertian::from(Vector3::new(0.8, 0.8, 0.0)))
+        )),
+        Box::new(Sphere::new(
+            Vector3::new(1.0, 0.0, -1.0),
+            0.5,
+            Box::new(Metal::new(Vector3::new(0.8, 0.6, 0.2), 0.3))
+        )),
+        Box::new(Sphere::new(
+            Vector3::new(-1.0, 0.0, -1.0),
+            0.5,
+            Box::new(Metal::new(Vector3::new(0.8, 0.8, 0.8), 1.0))
         )),
     ]);
 

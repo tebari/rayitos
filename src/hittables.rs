@@ -14,7 +14,7 @@ pub trait Hittable {
 
 
 pub trait Material {
-    fn scatter(&self, ray_in: &Ray, hit_record: &HitRecord) -> (&Vector3, Ray);
+    fn scatter(&self, ray_in: &Ray, hit_record: &HitRecord) -> (Vector3, Ray, bool);
 }
 
 pub struct Lambertian {
@@ -30,11 +30,45 @@ impl Lambertian {
 }
 
 impl Material for Lambertian {
-    fn scatter(&self, _ray_in: &Ray, hit_record: &HitRecord) -> (&Vector3, Ray) {
+    fn scatter(&self, _ray_in: &Ray, hit_record: &HitRecord) -> (Vector3, Ray, bool) {
         let target = hit_record.p + hit_record.normal + rng::random_in_unit_sphere();
         let scattered = Ray::new(hit_record.p, target - hit_record.p);
-        let attenuation = &self.albedo;
-        (&attenuation, scattered)
+        let attenuation = self.albedo;
+        (attenuation, scattered, true)
+    }
+}
+
+fn reflect(v: Vector3, n: Vector3) -> Vector3 {
+    v - 2.0 * v.dot(n) * n
+}
+
+pub struct Metal {
+    albedo: Vector3,
+    fuzz: f64
+}
+
+impl Metal {
+    pub fn new(albedo: Vector3, fuzz: f64) -> Metal {
+        let f = if fuzz < 1.0 {
+            fuzz
+        } else {
+            1.0
+        };
+
+        Metal {
+            albedo,
+            fuzz: f
+        }
+    }
+}
+
+impl Material for Metal {
+    fn scatter(&self, ray_in: &Ray, hit_record: &HitRecord) -> (Vector3, Ray, bool) {
+        let reflected = reflect(ray_in.direction().make_unit_vector(), hit_record.normal);
+        let scattered = Ray::new(hit_record.p, reflected + self.fuzz * rng::random_in_unit_sphere());
+        let attenuation = self.albedo;
+        let scatter = scattered.direction().dot(hit_record.normal) > 0.0;
+        (attenuation, scattered, scatter)
     }
 }
 
