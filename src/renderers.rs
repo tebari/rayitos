@@ -1,7 +1,7 @@
 use crate::ray::Ray;
 use crate::image::{Image, Pixel, color_float_to_u8};
 use crate::vector::Vector3;
-use crate::hittables::{Hittable, HittableList, Sphere};
+use crate::hittables::{Hittable, HittableList, Sphere, Lambertian};
 use rand::{Rng, thread_rng};
 
 pub fn draw_blank(width: u32, height: u32) -> Image {
@@ -51,11 +51,30 @@ impl Camera {
     }
 }
 
+fn random_f64() -> f64 {
+    thread_rng().gen_range(0.0,1.0)
+}
+
+fn random_f64x3() -> [f64; 3] {
+    [random_f64(), random_f64(), random_f64()]
+}
+
+fn random_in_unit_sphere() -> Vector3 {
+    loop {
+        let p = 2.0 * Vector3::from_array(random_f64x3()) - Vector3::from_array([1.0; 3]);
+        if p.squared_length() < 1.0 {
+            return p;
+        }
+    }
+}
+
 fn color(ray: &Ray, world: &dyn Hittable) -> Vector3 {
-    let hit_record = world.hit(ray, 0.0, std::f64::MAX);
+    let hit_record = world.hit(ray, 0.001, std::f64::MAX);
     match hit_record {
         Some(rec) => {
-            0.5 * Vector3::new(rec.normal.x()+1.0, rec.normal.y()+1.0, rec.normal.z()+1.0)
+            let target = rec.p + rec.normal + random_in_unit_sphere();
+            0.5 * color(&Ray::new(rec.p, target - rec.p), world)
+            //0.5 * Vector3::new(rec.normal.x()+1.0, rec.normal.y()+1.0, rec.normal.z()+1.0)
         },
         None => {
             let unit_direction = ray.direction().make_unit_vector();
@@ -63,10 +82,6 @@ fn color(ray: &Ray, world: &dyn Hittable) -> Vector3 {
             (1.0 - t) * Vector3::new(1.0,1.0,1.0) + t*Vector3::new(0.5,0.7,1.0)
         }
     }
-}
-
-fn random_f64() -> f64 {
-    thread_rng().gen_range(0.0,1.0)
 }
 
 pub fn draw_sky(width: u32, height: u32) -> Image {
@@ -79,8 +94,16 @@ pub fn draw_sky(width: u32, height: u32) -> Image {
     let camera = Camera::default();
 
     let world = HittableList::new(vec![
-        Box::new(Sphere::new(Vector3::new(0.0, 0.0, -1.0), 0.5)),
-        Box::new(Sphere::new(Vector3::new(0.0, -100.5, -1.0), 100.0)),
+        Box::new(Sphere::new(
+            Vector3::new(0.0, 0.0, -1.0),
+            0.5,
+            Box::new(Lambertian::from(Vector3::new(0.8, 0.3, 0.3)))
+        )),
+        Box::new(Sphere::new(
+            Vector3::new(0.0, -100.5, -1.0),
+            100.0,
+            Box::new(Lambertian::from(Vector3::new(0.8, 0.8, 0.0)))
+        )),
     ]);
 
     for x in 0..height {
@@ -95,7 +118,9 @@ pub fn draw_sky(width: u32, height: u32) -> Image {
                 color_vector += color(&r, &world);
             }
             
-            image.set(x, y, Pixel::from(color_vector / aa_samples_f));
+            let color_vector_aa = color_vector / aa_samples_f;
+            let color_vector_gamma = color_vector_aa.square_root();
+            image.set(x, y, Pixel::from(color_vector_gamma));
         }
     }
     

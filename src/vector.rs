@@ -12,6 +12,12 @@ impl Vector3 {
         }
     }
 
+    pub fn from_array(v: [f64; 3]) -> Vector3 {
+        Vector3 {
+            v
+        }
+    }
+
     pub fn x(&self) -> f64 {
         self.v[0]
     }
@@ -42,6 +48,20 @@ impl Vector3 {
         let v = self.v;
         let v2 = rhs.v;
         v[0]*v2[0] + v[1]*v2[1] + v[2]*v2[2]
+    }
+
+    pub fn squared_length(&self) -> f64 {
+        let v = self.v;
+        v[0]*v[0] + v[1]*v[1] + v[2]*v[2]
+    }
+
+    pub fn square_root(self) -> Vector3 {
+        let v = self.v;
+        Vector3::new(
+            v[0].sqrt(),
+            v[1].sqrt(),
+            v[2].sqrt()
+        )
     }
 }
 
