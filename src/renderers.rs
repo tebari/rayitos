@@ -2,7 +2,7 @@ use crate::ray::Ray;
 use crate::image::{Image, Pixel, color_float_to_u8};
 use crate::vector::Vector3;
 use crate::hittables::{Hittable, HittableList, Sphere, Lambertian, Metal, Dielectric};
-use crate::rng::random_f64;
+use crate::rng::{random_f64, random_in_unit_sphere};
 
 pub fn draw_blank(width: u32, height: u32) -> Image {
     Image::new(width, height)
@@ -34,28 +34,42 @@ struct Camera {
     lower_left_corner: Vector3,
     horizontal: Vector3,
     vertical: Vector3,
+    u: Vector3,
+    v: Vector3,
+    lens_radius: f64
 }
 
 impl Camera {
-    fn new(lookfrom: Vector3, lookat: Vector3, vup: Vector3, vfov: f64, aspect: f64) -> Camera {
+    fn new(lookfrom: Vector3, lookat: Vector3, vup: Vector3, vfov: f64, aspect: f64,
+           aperture: f64, focus_dist: f64) -> Camera {
+
+        let lens_radius = aperture / 2.0;
         let theta = vfov * std::f64::consts::PI / 180.0;
         let half_height = (theta/2.0).tan();
         let half_width = aspect * half_height;
         let w = (lookfrom - lookat).make_unit_vector();
         let u = vup.cross(w).make_unit_vector();
         let v = w.cross(u);
+        let lower_left_corner = lookfrom
+            - half_width * focus_dist * u
+            - half_height * focus_dist * v
+            - focus_dist * w;
 
         Camera {
-            lower_left_corner: lookfrom - half_width*u - half_height*v - w,
-            horizontal: 2.0 * half_width * u,
-            vertical: 2.0 * half_height * v,
+            lower_left_corner,
+            horizontal: 2.0 * half_width * focus_dist * u,
+            vertical: 2.0 * half_height * focus_dist * v,
             origin: lookfrom,
+            u, v, lens_radius
         }
     }
 
-    fn ray(&self, u: f64, v: f64) -> Ray {
-        Ray::new(self.origin,
-            self.lower_left_corner + u*self.horizontal + v*self.vertical - self.origin
+    fn ray(&self, s: f64, t: f64) -> Ray {
+        let rd = self.lens_radius * random_in_unit_sphere();
+        let offset = self.u * rd.x() + self.v * rd.y();
+        Ray::new(self.origin + offset,
+            self.lower_left_corner + s*self.horizontal
+            + t*self.vertical - self.origin - offset
         )
     }
 }
@@ -86,12 +100,19 @@ pub fn draw_sky(width: u32, height: u32) -> Image {
     let width_float = width as f64;
 
     let mut image = Image::new(width, height);
+
+    let lookfrom = Vector3::new(3.0, 3.0, 2.0);
+    let lookat = Vector3::new(0.0, 0.0, -1.0);
+    let distance_to_focus = (lookfrom-lookat).length();
+    let aperture = 2.0;
     let camera = Camera::new(
-        Vector3::new(-2.0, 2.0, 1.0),
-        Vector3::new(0.0, 0.0, -1.0),
+        lookfrom,
+        lookat,
         Vector3::new(0.0, 1.0, 0.0),
-        90.0,
-        width_float/height_float
+        20.0,
+        width_float / height_float,
+        aperture,
+        distance_to_focus
     );
 
     let world = HittableList::new(vec![
