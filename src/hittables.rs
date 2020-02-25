@@ -72,6 +72,70 @@ impl Material for Metal {
     }
 }
 
+fn refract(v: Vector3, n: Vector3, ni_over_nt: f64) -> Option<Vector3> {
+    let uv = v.make_unit_vector();
+    let dt = uv.dot(n);
+    let discriminant = 1.0 - ni_over_nt * ni_over_nt * (1.0-dt*dt);
+    if discriminant > 0.0 {
+        let refracted = ni_over_nt * (uv - n * dt) - n * discriminant.sqrt();
+        return Some(refracted)
+    }
+    None
+}
+
+fn shlick(cosine: f64, reflective_index: f64) -> f64 {
+    let r0 = (1.0-reflective_index) / (1.0+reflective_index);
+    let r0 = r0 * r0;
+    r0 + (1.0-r0) * (1.0-cosine).powi(5)
+}
+
+pub struct Dielectric {
+    reflective_index: f64
+}
+
+impl Dielectric {
+    pub fn new(reflective_index: f64) -> Dielectric {
+        Dielectric {
+            reflective_index
+        }
+    }
+}
+
+impl Material for Dielectric {
+    fn scatter(&self, ray_in: &Ray, hit_record: &HitRecord) -> (Vector3, Ray, bool) {
+        let reflected = reflect(ray_in.direction(), hit_record.normal);
+        let attenuation = Vector3::new(1.0, 1.0, 1.0);
+
+        let positive_direction = ray_in.direction().dot(hit_record.normal) > 0.0;
+
+        let (outward_normal, ni_over_nt, cosine) = if positive_direction {
+            let cosine = self.reflective_index *
+                ray_in.direction().dot(hit_record.normal) / ray_in.direction().length();
+            (-hit_record.normal, self.reflective_index, cosine)
+        } else {
+            let cosine = (-(ray_in.direction().dot(hit_record.normal))) / ray_in.direction().length();
+            (hit_record.normal, 1.0 / self.reflective_index, cosine)
+        };
+
+        let refracted_opt = refract(ray_in.direction(), outward_normal, ni_over_nt);
+        let new_ray = match refracted_opt {
+            Some(refracted) => {
+                let reflected_prob = shlick(cosine, self.reflective_index);
+                if rng::random_f64() < reflected_prob {
+                    Ray::new(hit_record.p, reflected)
+                } else {
+                    Ray::new(hit_record.p, refracted)
+                }
+            },
+            _ => {
+                Ray::new(hit_record.p, reflected)
+            }
+        };
+
+        (attenuation, new_ray, true)
+    }
+}
+
 pub struct Sphere {
     center: Vector3,
     radius: f64,

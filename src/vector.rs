@@ -50,6 +50,11 @@ impl Vector3 {
         v[0]*v2[0] + v[1]*v2[1] + v[2]*v2[2]
     }
 
+    pub fn length(&self) -> f64 {
+        let v = self.v;
+        (v[0]*v[0] + v[1]*v[1] + v[2]*v[2]).sqrt()
+    }
+
     pub fn squared_length(&self) -> f64 {
         let v = self.v;
         v[0]*v[0] + v[1]*v[1] + v[2]*v[2]

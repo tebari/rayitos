@@ -1,7 +1,7 @@
 use crate::ray::Ray;
 use crate::image::{Image, Pixel, color_float_to_u8};
 use crate::vector::Vector3;
-use crate::hittables::{Hittable, HittableList, Sphere, Lambertian, Metal};
+use crate::hittables::{Hittable, HittableList, Sphere, Lambertian, Metal, Dielectric};
 use crate::rng::random_f64;
 
 pub fn draw_blank(width: u32, height: u32) -> Image {
@@ -83,7 +83,7 @@ pub fn draw_sky(width: u32, height: u32) -> Image {
         Box::new(Sphere::new(
             Vector3::new(0.0, 0.0, -1.0),
             0.5,
-            Box::new(Lambertian::from(Vector3::new(0.8, 0.3, 0.3)))
+            Box::new(Lambertian::from(Vector3::new(0.1, 0.2, 0.5)))
         )),
         Box::new(Sphere::new(
             Vector3::new(0.0, -100.5, -1.0),
@@ -98,7 +98,12 @@ pub fn draw_sky(width: u32, height: u32) -> Image {
         Box::new(Sphere::new(
             Vector3::new(-1.0, 0.0, -1.0),
             0.5,
-            Box::new(Metal::new(Vector3::new(0.8, 0.8, 0.8), 1.0))
+            Box::new(Dielectric::new(1.5))
+        )),
+        Box::new(Sphere::new(
+            Vector3::new(-1.0, 0.0, -1.0),
+            -0.45,
+            Box::new(Dielectric::new(1.5))
         )),
     ]);
 
