@@ -93,29 +93,8 @@ fn color(ray: &Ray, world: &dyn Hittable, depth: u8) -> Vector3 {
     }
 }
 
-pub fn draw_sky(width: u32, height: u32) -> Image {
-    let aa_samples = 100;
-    let aa_samples_f = aa_samples as f64;
-    let height_float = height as f64;
-    let width_float = width as f64;
-
-    let mut image = Image::new(width, height);
-
-    let lookfrom = Vector3::new(3.0, 3.0, 2.0);
-    let lookat = Vector3::new(0.0, 0.0, -1.0);
-    let distance_to_focus = (lookfrom-lookat).length();
-    let aperture = 2.0;
-    let camera = Camera::new(
-        lookfrom,
-        lookat,
-        Vector3::new(0.0, 1.0, 0.0),
-        20.0,
-        width_float / height_float,
-        aperture,
-        distance_to_focus
-    );
-
-    let world = HittableList::new(vec![
+pub fn trio_sphere_scene() -> HittableList {
+    HittableList::new(vec![
         Box::new(Sphere::new(
             Vector3::new(0.0, 0.0, -1.0),
             0.5,
@@ -141,7 +120,15 @@ pub fn draw_sky(width: u32, height: u32) -> Image {
             -0.45,
             Box::new(Dielectric::new(1.5))
         )),
-    ]);
+    ])
+}
+
+fn render(width: u32, height: u32, camera: Camera, world: HittableList) -> Image {
+    let mut image = Image::new(width, height);
+    let aa_samples = 100;
+    let aa_samples_f = aa_samples as f64;
+    let height_float = height as f64;
+    let width_float = width as f64;
 
     for x in 0..height {
         for y in 0..width {
@@ -162,4 +149,24 @@ pub fn draw_sky(width: u32, height: u32) -> Image {
     }
     
     image
+}
+
+pub fn draw_trio(width: u32, height: u32) -> Image {
+    let height_float = height as f64;
+    let width_float = width as f64;
+
+    let lookfrom = Vector3::new(3.0, 3.0, 2.0);
+    let lookat = Vector3::new(0.0, 0.0, -1.0);
+    let distance_to_focus = (lookfrom-lookat).length();
+    let aperture = 2.0;
+    let camera = Camera::new(
+        lookfrom,
+        lookat,
+        Vector3::new(0.0, 1.0, 0.0),
+        20.0,
+        width_float / height_float,
+        aperture,
+        distance_to_focus
+    );
+    render(width, height, camera, trio_sphere_scene())
 }

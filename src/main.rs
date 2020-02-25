@@ -16,7 +16,7 @@ fn main() {
 
     let image = match renderer.as_ref() {
         "gradient" => renderers::draw_gradient(width, height),
-        "sky" => renderers::draw_sky(width, height),
+        "trio" => renderers::draw_trio(width, height),
         _ => renderers::draw_blank(width, height)
     };
     

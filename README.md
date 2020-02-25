@@ -9,5 +9,5 @@ cargo run <renderer> <width> <height>
 
 Example
 ```
-cargo run sky 1000 500
+cargo run trio 1000 500
 ```
