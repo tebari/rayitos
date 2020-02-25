@@ -50,6 +50,16 @@ impl Vector3 {
         v[0]*v2[0] + v[1]*v2[1] + v[2]*v2[2]
     }
 
+    pub fn cross(self, rhs: Vector3) -> Vector3 {
+        let v1 = self.v;
+        let v2 = rhs.v;
+        Vector3 { v: [
+            v1[1] * v2[2] - v1[2] * v2[1],
+            v1[2] * v2[0] - v1[0] * v2[2],
+            v1[0] * v2[1] - v1[1] * v2[0]
+        ]}
+    }
+
     pub fn length(&self) -> f64 {
         let v = self.v;
         (v[0]*v[0] + v[1]*v[1] + v[2]*v[2]).sqrt()

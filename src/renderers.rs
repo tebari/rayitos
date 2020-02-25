@@ -37,17 +37,26 @@ struct Camera {
 }
 
 impl Camera {
-    fn default() -> Camera {
+    fn new(lookfrom: Vector3, lookat: Vector3, vup: Vector3, vfov: f64, aspect: f64) -> Camera {
+        let theta = vfov * std::f64::consts::PI / 180.0;
+        let half_height = (theta/2.0).tan();
+        let half_width = aspect * half_height;
+        let w = (lookfrom - lookat).make_unit_vector();
+        let u = vup.cross(w).make_unit_vector();
+        let v = w.cross(u);
+
         Camera {
-            origin: Vector3::new(0.0, 0.0, 0.0),
-            lower_left_corner: Vector3::new(-2.0, -1.0, -1.0),
-            horizontal: Vector3::new(4.0, 0.0, 0.0),
-            vertical: Vector3::new(0.0, 2.0, 0.0)
+            lower_left_corner: lookfrom - half_width*u - half_height*v - w,
+            horizontal: 2.0 * half_width * u,
+            vertical: 2.0 * half_height * v,
+            origin: lookfrom,
         }
     }
 
     fn ray(&self, u: f64, v: f64) -> Ray {
-        Ray::new(self.origin, self.lower_left_corner + u*self.horizontal + v*self.vertical)
+        Ray::new(self.origin,
+            self.lower_left_corner + u*self.horizontal + v*self.vertical - self.origin
+        )
     }
 }
 
@@ -77,7 +86,13 @@ pub fn draw_sky(width: u32, height: u32) -> Image {
     let width_float = width as f64;
 
     let mut image = Image::new(width, height);
-    let camera = Camera::default();
+    let camera = Camera::new(
+        Vector3::new(-2.0, 2.0, 1.0),
+        Vector3::new(0.0, 0.0, -1.0),
+        Vector3::new(0.0, 1.0, 0.0),
+        90.0,
+        width_float/height_float
+    );
 
     let world = HittableList::new(vec![
         Box::new(Sphere::new(
