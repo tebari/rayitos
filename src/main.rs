@@ -17,6 +17,7 @@ fn main() {
     let image = match renderer.as_ref() {
         "gradient" => renderers::draw_gradient(width, height),
         "trio" => renderers::draw_trio(width, height),
+        "random" => renderers::draw_random(width, height),
         _ => renderers::draw_blank(width, height),
     };
 
@@ -31,7 +32,7 @@ fn get_uint_or(number: Option<&String>, default: u32) -> u32 {
     let parsed_num = number.map(|num_str| num_str.parse::<u32>());
     match parsed_num {
         Some(Ok(num)) => num,
-        _ => default
+        _ => default,
     }
 }
 
