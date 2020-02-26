@@ -1,7 +1,7 @@
+mod hittables;
 mod image;
 pub mod ppm;
-pub mod renderers;
 mod ray;
-mod vector;
-mod hittables;
+pub mod renderers;
 mod rng;
+mod vector;

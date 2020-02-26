@@ -1,8 +1,8 @@
+use crate::hittables::{Dielectric, Hittable, HittableList, Lambertian, Metal, Sphere};
+use crate::image::{color_float_to_u8, Image, Pixel};
 use crate::ray::Ray;
-use crate::image::{Image, Pixel, color_float_to_u8};
-use crate::vector::Vector3;
-use crate::hittables::{Hittable, HittableList, Sphere, Lambertian, Metal, Dielectric};
 use crate::rng::{random_f64, random_in_unit_sphere};
+use crate::vector::Vector3;
 
 pub fn draw_blank(width: u32, height: u32) -> Image {
     Image::new(width, height)
@@ -36,40 +36,46 @@ struct Camera {
     vertical: Vector3,
     u: Vector3,
     v: Vector3,
-    lens_radius: f64
+    lens_radius: f64,
 }
 
 impl Camera {
-    fn new(lookfrom: Vector3, lookat: Vector3, vup: Vector3, vfov: f64, aspect: f64,
-           aperture: f64, focus_dist: f64) -> Camera {
-
+    fn new(
+        lookfrom: Vector3,
+        lookat: Vector3,
+        vup: Vector3,
+        vfov: f64,
+        aspect: f64,
+        aperture: f64,
+        focus_dist: f64,
+    ) -> Camera {
         let lens_radius = aperture / 2.0;
         let theta = vfov * std::f64::consts::PI / 180.0;
-        let half_height = (theta/2.0).tan();
+        let half_height = (theta / 2.0).tan();
         let half_width = aspect * half_height;
         let w = (lookfrom - lookat).make_unit_vector();
         let u = vup.cross(w).make_unit_vector();
         let v = w.cross(u);
-        let lower_left_corner = lookfrom
-            - half_width * focus_dist * u
-            - half_height * focus_dist * v
-            - focus_dist * w;
+        let lower_left_corner =
+            lookfrom - half_width * focus_dist * u - half_height * focus_dist * v - focus_dist * w;
 
         Camera {
             lower_left_corner,
             horizontal: 2.0 * half_width * focus_dist * u,
             vertical: 2.0 * half_height * focus_dist * v,
             origin: lookfrom,
-            u, v, lens_radius
+            u,
+            v,
+            lens_radius,
         }
     }
 
     fn ray(&self, s: f64, t: f64) -> Ray {
         let rd = self.lens_radius * random_in_unit_sphere();
         let offset = self.u * rd.x() + self.v * rd.y();
-        Ray::new(self.origin + offset,
-            self.lower_left_corner + s*self.horizontal
-            + t*self.vertical - self.origin - offset
+        Ray::new(
+            self.origin + offset,
+            self.lower_left_corner + s * self.horizontal + t * self.vertical - self.origin - offset,
         )
     }
 }
@@ -80,15 +86,15 @@ fn color(ray: &Ray, world: &dyn Hittable, depth: u8) -> Vector3 {
         Some(rec) => {
             let (attenuation, scattered, scatter) = rec.material.scatter(ray, &rec);
             if scatter && depth < 50 {
-                return attenuation * color(&scattered, world, depth+1);
+                return attenuation * color(&scattered, world, depth + 1);
             } else {
-                return Vector3::new(0.0,0.0,0.0)
+                return Vector3::new(0.0, 0.0, 0.0);
             }
-        },
+        }
         None => {
             let unit_direction = ray.direction().make_unit_vector();
             let t = 0.5 * (unit_direction.y() + 1.0);
-            (1.0 - t) * Vector3::new(1.0,1.0,1.0) + t*Vector3::new(0.5,0.7,1.0)
+            (1.0 - t) * Vector3::new(1.0, 1.0, 1.0) + t * Vector3::new(0.5, 0.7, 1.0)
         }
     }
 }
@@ -98,27 +104,27 @@ pub fn trio_sphere_scene() -> HittableList {
         Box::new(Sphere::new(
             Vector3::new(0.0, 0.0, -1.0),
             0.5,
-            Box::new(Lambertian::from(Vector3::new(0.1, 0.2, 0.5)))
+            Box::new(Lambertian::from(Vector3::new(0.1, 0.2, 0.5))),
         )),
         Box::new(Sphere::new(
             Vector3::new(0.0, -100.5, -1.0),
             100.0,
-            Box::new(Lambertian::from(Vector3::new(0.8, 0.8, 0.0)))
+            Box::new(Lambertian::from(Vector3::new(0.8, 0.8, 0.0))),
         )),
         Box::new(Sphere::new(
             Vector3::new(1.0, 0.0, -1.0),
             0.5,
-            Box::new(Metal::new(Vector3::new(0.8, 0.6, 0.2), 0.3))
+            Box::new(Metal::new(Vector3::new(0.8, 0.6, 0.2), 0.3)),
         )),
         Box::new(Sphere::new(
             Vector3::new(-1.0, 0.0, -1.0),
             0.5,
-            Box::new(Dielectric::new(1.5))
+            Box::new(Dielectric::new(1.5)),
         )),
         Box::new(Sphere::new(
             Vector3::new(-1.0, 0.0, -1.0),
             -0.45,
-            Box::new(Dielectric::new(1.5))
+            Box::new(Dielectric::new(1.5)),
         )),
     ])
 }
@@ -141,13 +147,13 @@ fn render(width: u32, height: u32, camera: Camera, world: HittableList) -> Image
                 let r = camera.ray(u, v);
                 color_vector += color(&r, &world, 0);
             }
-            
+
             let color_vector_aa = color_vector / aa_samples_f;
             let color_vector_gamma = color_vector_aa.square_root();
             image.set(x, y, Pixel::from(color_vector_gamma));
         }
     }
-    
+
     image
 }
 
@@ -157,7 +163,7 @@ pub fn draw_trio(width: u32, height: u32) -> Image {
 
     let lookfrom = Vector3::new(3.0, 3.0, 2.0);
     let lookat = Vector3::new(0.0, 0.0, -1.0);
-    let distance_to_focus = (lookfrom-lookat).length();
+    let distance_to_focus = (lookfrom - lookat).length();
     let aperture = 2.0;
     let camera = Camera::new(
         lookfrom,
@@ -166,7 +172,7 @@ pub fn draw_trio(width: u32, height: u32) -> Image {
         20.0,
         width_float / height_float,
         aperture,
-        distance_to_focus
+        distance_to_focus,
     );
     render(width, height, camera, trio_sphere_scene())
 }

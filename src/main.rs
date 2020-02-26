@@ -1,8 +1,8 @@
-use rayitolib::{renderers, ppm};
+use rayitolib::{ppm, renderers};
 use std::env;
-use std::io::prelude::*;
+use std::fs::OpenOptions;
 use std::io;
-use std::fs::{OpenOptions};
+use std::io::prelude::*;
 
 fn main() {
     println!("Trace all the rays!");
@@ -17,9 +17,9 @@ fn main() {
     let image = match renderer.as_ref() {
         "gradient" => renderers::draw_gradient(width, height),
         "trio" => renderers::draw_trio(width, height),
-        _ => renderers::draw_blank(width, height)
+        _ => renderers::draw_blank(width, height),
     };
-    
+
     println!("Generating Output File");
     let ppm_str = ppm::to_ppm_p3_string(&image);
     println!("Write file");
@@ -28,18 +28,18 @@ fn main() {
 }
 
 fn get_uint_or(number: Option<&String>, default: u32) -> u32 {
-    number.map(
-        |num_str| num_str.parse::<u32>().unwrap_or(default)
-    ).unwrap_or(default)
+    number
+        .map(|num_str| num_str.parse::<u32>().unwrap_or(default))
+        .unwrap_or(default)
 }
 
-fn write_to_file(filepath: &str, data: &String) -> Result<(),io::Error> {
+fn write_to_file(filepath: &str, data: &String) -> Result<(), io::Error> {
     let mut file = OpenOptions::new()
         .write(true)
         .create(true)
         .truncate(true)
         .open(filepath)?;
-    
+
     file.write_all(data.as_bytes())?;
     file.sync_all()?;
     Ok(())

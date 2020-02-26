@@ -1,31 +1,28 @@
-use crate::vector::Vector3;
 use crate::ray::Ray;
 use crate::rng;
+use crate::vector::Vector3;
 pub struct HitRecord<'a> {
     pub t: f64,
     pub p: Vector3,
     pub normal: Vector3,
-    pub material: &'a Box<dyn Material>
+    pub material: &'a Box<dyn Material>,
 }
 
 pub trait Hittable {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord>;
 }
 
-
 pub trait Material {
     fn scatter(&self, ray_in: &Ray, hit_record: &HitRecord) -> (Vector3, Ray, bool);
 }
 
 pub struct Lambertian {
-    albedo: Vector3
+    albedo: Vector3,
 }
 
 impl Lambertian {
     pub fn from(albedo: Vector3) -> Lambertian {
-        Lambertian {
-            albedo
-        }
+        Lambertian { albedo }
     }
 }
 
@@ -44,28 +41,24 @@ fn reflect(v: Vector3, n: Vector3) -> Vector3 {
 
 pub struct Metal {
     albedo: Vector3,
-    fuzz: f64
+    fuzz: f64,
 }
 
 impl Metal {
     pub fn new(albedo: Vector3, fuzz: f64) -> Metal {
-        let f = if fuzz < 1.0 {
-            fuzz
-        } else {
-            1.0
-        };
+        let f = if fuzz < 1.0 { fuzz } else { 1.0 };
 
-        Metal {
-            albedo,
-            fuzz: f
-        }
+        Metal { albedo, fuzz: f }
     }
 }
 
 impl Material for Metal {
     fn scatter(&self, ray_in: &Ray, hit_record: &HitRecord) -> (Vector3, Ray, bool) {
         let reflected = reflect(ray_in.direction().make_unit_vector(), hit_record.normal);
-        let scattered = Ray::new(hit_record.p, reflected + self.fuzz * rng::random_in_unit_sphere());
+        let scattered = Ray::new(
+            hit_record.p,
+            reflected + self.fuzz * rng::random_in_unit_sphere(),
+        );
         let attenuation = self.albedo;
         let scatter = scattered.direction().dot(hit_record.normal) > 0.0;
         (attenuation, scattered, scatter)
@@ -75,29 +68,27 @@ impl Material for Metal {
 fn refract(v: Vector3, n: Vector3, ni_over_nt: f64) -> Option<Vector3> {
     let uv = v.make_unit_vector();
     let dt = uv.dot(n);
-    let discriminant = 1.0 - ni_over_nt * ni_over_nt * (1.0-dt*dt);
+    let discriminant = 1.0 - ni_over_nt * ni_over_nt * (1.0 - dt * dt);
     if discriminant > 0.0 {
         let refracted = ni_over_nt * (uv - n * dt) - n * discriminant.sqrt();
-        return Some(refracted)
+        return Some(refracted);
     }
     None
 }
 
 fn shlick(cosine: f64, reflective_index: f64) -> f64 {
-    let r0 = (1.0-reflective_index) / (1.0+reflective_index);
+    let r0 = (1.0 - reflective_index) / (1.0 + reflective_index);
     let r0 = r0 * r0;
-    r0 + (1.0-r0) * (1.0-cosine).powi(5)
+    r0 + (1.0 - r0) * (1.0 - cosine).powi(5)
 }
 
 pub struct Dielectric {
-    reflective_index: f64
+    reflective_index: f64,
 }
 
 impl Dielectric {
     pub fn new(reflective_index: f64) -> Dielectric {
-        Dielectric {
-            reflective_index
-        }
+        Dielectric { reflective_index }
     }
 }
 
@@ -109,11 +100,12 @@ impl Material for Dielectric {
         let positive_direction = ray_in.direction().dot(hit_record.normal) > 0.0;
 
         let (outward_normal, ni_over_nt, cosine) = if positive_direction {
-            let cosine = self.reflective_index *
-                ray_in.direction().dot(hit_record.normal) / ray_in.direction().length();
+            let cosine = self.reflective_index * ray_in.direction().dot(hit_record.normal)
+                / ray_in.direction().length();
             (-hit_record.normal, self.reflective_index, cosine)
         } else {
-            let cosine = (-(ray_in.direction().dot(hit_record.normal))) / ray_in.direction().length();
+            let cosine =
+                (-(ray_in.direction().dot(hit_record.normal))) / ray_in.direction().length();
             (hit_record.normal, 1.0 / self.reflective_index, cosine)
         };
 
@@ -126,10 +118,8 @@ impl Material for Dielectric {
                 } else {
                     Ray::new(hit_record.p, refracted)
                 }
-            },
-            _ => {
-                Ray::new(hit_record.p, reflected)
             }
+            _ => Ray::new(hit_record.p, reflected),
         };
 
         (attenuation, new_ray, true)
@@ -139,13 +129,15 @@ impl Material for Dielectric {
 pub struct Sphere {
     center: Vector3,
     radius: f64,
-    material: Box<dyn Material>
+    material: Box<dyn Material>,
 }
 
 impl Sphere {
     pub fn new(center: Vector3, radius: f64, material: Box<dyn Material>) -> Sphere {
         Sphere {
-            center, radius, material
+            center,
+            radius,
+            material,
         }
     }
 }
@@ -155,8 +147,8 @@ impl Hittable for Sphere {
         let oc = ray.origin() - self.center;
         let a = ray.direction().dot(ray.direction());
         let b = oc.dot(ray.direction());
-        let c = oc.dot(oc) - self.radius*self.radius;
-        let discriminant = b*b - a*c;
+        let c = oc.dot(oc) - self.radius * self.radius;
+        let discriminant = b * b - a * c;
         if discriminant > 0.0 {
             let temp = (-b - discriminant.sqrt()) / a;
             let point = ray.point_at(temp);
@@ -165,7 +157,7 @@ impl Hittable for Sphere {
                     t: temp,
                     p: point,
                     normal: (point - self.center) / self.radius,
-                    material: &self.material
+                    material: &self.material,
                 });
             }
             let temp = (-b + discriminant.sqrt()) / a;
@@ -175,7 +167,7 @@ impl Hittable for Sphere {
                     t: temp,
                     p: point,
                     normal: (point - self.center) / self.radius,
-                    material: &self.material
+                    material: &self.material,
                 });
             }
         }
@@ -184,20 +176,18 @@ impl Hittable for Sphere {
 }
 
 pub struct HittableList {
-    list: Vec<Box<dyn Hittable>>
+    list: Vec<Box<dyn Hittable>>,
 }
 
 impl HittableList {
     pub fn new(list: Vec<Box<dyn Hittable>>) -> HittableList {
-        HittableList {
-            list
-        }
+        HittableList { list }
     }
 }
 
 impl Hittable for HittableList {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
-        let mut hit_record : Option<HitRecord> = None;
+        let mut hit_record: Option<HitRecord> = None;
         let mut closet_so_far = t_max;
         for hittable in &self.list {
             let new_hit = hittable.hit(ray, t_min, closet_so_far);

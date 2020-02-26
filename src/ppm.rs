@@ -22,7 +22,8 @@ fn pixelmap_to_string(image: &image::Image) -> String {
 }
 
 pub fn to_ppm_p3_string(image: &image::Image) -> String {
-    format!("{}\n{}",
+    format!(
+        "{}\n{}",
         header(image.get_height(), image.get_width()),
         pixelmap_to_string(image)
     )

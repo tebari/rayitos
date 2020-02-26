@@ -1,8 +1,8 @@
-use rand::{Rng, thread_rng};
 use crate::vector::Vector3;
+use rand::{thread_rng, Rng};
 
 pub fn random_f64() -> f64 {
-    thread_rng().gen_range(0.0,1.0)
+    thread_rng().gen_range(0.0, 1.0)
 }
 
 fn random_f64x3() -> [f64; 3] {

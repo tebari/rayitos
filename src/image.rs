@@ -12,18 +12,14 @@ pub struct Pixel {
 
 impl Pixel {
     pub fn new(r: u8, g: u8, b: u8) -> Pixel {
-        Pixel {
-            r,
-            g,
-            b,
-        }
+        Pixel { r, g, b }
     }
 
     pub fn from(vector: Vector3) -> Pixel {
         Pixel::new(
             color_float_to_u8(vector.x()),
             color_float_to_u8(vector.y()),
-            color_float_to_u8(vector.z())
+            color_float_to_u8(vector.z()),
         )
     }
 
@@ -44,7 +40,7 @@ fn init_bitmap(width: u32, height: u32) -> Vec<Pixel> {
     let capacity = width * height;
     let mut bitmap: Vec<Pixel> = Vec::with_capacity(capacity as usize);
     for _i in 0..capacity {
-        bitmap.push(Pixel::new(0,0,0))
+        bitmap.push(Pixel::new(0, 0, 0))
     }
     bitmap
 }
@@ -52,7 +48,7 @@ fn init_bitmap(width: u32, height: u32) -> Vec<Pixel> {
 pub struct Image {
     width: u32,
     height: u32,
-    pixelmap: Vec<Pixel>
+    pixelmap: Vec<Pixel>,
 }
 
 impl Image {
@@ -60,12 +56,12 @@ impl Image {
         Image {
             width,
             height,
-            pixelmap: init_bitmap(width, height)
+            pixelmap: init_bitmap(width, height),
         }
     }
 
     fn xy_to_index(&self, x: u32, y: u32) -> usize {
-        (x*self.width + y) as usize
+        (x * self.width + y) as usize
     }
 
     pub fn set(&mut self, x: u32, y: u32, pixel: Pixel) {
