@@ -99,6 +99,79 @@ fn color(ray: &Ray, world: &dyn Hittable, depth: u8) -> Vector3 {
     }
 }
 
+pub fn random_scene() -> HittableList {
+    let n = 500;
+    let mut list: Vec<Box<dyn Hittable>> = Vec::with_capacity(n + 1);
+    list.push(Box::new(Sphere::new(
+        Vector3::new(0.0, -1000.0, 0.0),
+        1000.0,
+        Box::new(Lambertian::from(Vector3::new(0.5, 0.5, 0.5))),
+    )));
+    for a in -11..11 {
+        for b in -11..11 {
+            let choose_mat = random_f64();
+            let center = Vector3::new(
+                a as f64 + 0.9 * random_f64(),
+                0.2,
+                b as f64 + 0.9 * random_f64(),
+            );
+            if (center - Vector3::new(4.0, 0.2, 0.0)).length() > 0.9 {
+                if choose_mat < 0.8 {
+                    //diffuse
+                    list.push(Box::new(Sphere::new(
+                        center,
+                        0.2,
+                        Box::new(Lambertian::from(Vector3::new(
+                            random_f64() * random_f64(),
+                            random_f64() * random_f64(),
+                            random_f64() * random_f64(),
+                        ))),
+                    )));
+                } else if choose_mat < 0.95 {
+                    //metal
+                    list.push(Box::new(Sphere::new(
+                        center,
+                        0.2,
+                        Box::new(Metal::new(
+                            Vector3::new(
+                                0.5 * (1.0 + random_f64()),
+                                0.5 * (1.0 + random_f64()),
+                                0.5 * (1.0 + random_f64()),
+                            ),
+                            0.5 * random_f64(),
+                        )),
+                    )));
+                } else {
+                    //glass
+                    list.push(Box::new(Sphere::new(
+                        center,
+                        0.2,
+                        Box::new(Dielectric::new(1.5)),
+                    )));
+                }
+            }
+        }
+    }
+
+    list.push(Box::new(Sphere::new(
+        Vector3::new(0.0, 1.0, 0.0),
+        1.0,
+        Box::new(Dielectric::new(1.5)),
+    )));
+    list.push(Box::new(Sphere::new(
+        Vector3::new(-4.0, 1.0, 0.0),
+        1.0,
+        Box::new(Lambertian::from(Vector3::new(0.4, 0.2, 0.1))),
+    )));
+    list.push(Box::new(Sphere::new(
+        Vector3::new(4.0, 1.0, 0.0),
+        1.0,
+        Box::new(Metal::new(Vector3::new(0.7, 0.6, 0.5), 0.0)),
+    )));
+
+    HittableList::new(list)
+}
+
 pub fn trio_sphere_scene() -> HittableList {
     HittableList::new(vec![
         Box::new(Sphere::new(
@@ -161,8 +234,8 @@ pub fn draw_trio(width: u32, height: u32) -> Image {
     let height_float = height as f64;
     let width_float = width as f64;
 
-    let lookfrom = Vector3::new(3.0, 3.0, 2.0);
-    let lookat = Vector3::new(0.0, 0.0, -1.0);
+    let lookfrom = Vector3::new(1.0, 3.0, 6.0);
+    let lookat = Vector3::new(0.0, 1.0, 0.0);
     let distance_to_focus = (lookfrom - lookat).length();
     let aperture = 2.0;
     let camera = Camera::new(
@@ -175,4 +248,24 @@ pub fn draw_trio(width: u32, height: u32) -> Image {
         distance_to_focus,
     );
     render(width, height, camera, trio_sphere_scene())
+}
+
+pub fn draw_random(width: u32, height: u32) -> Image {
+    let height_float = height as f64;
+    let width_float = width as f64;
+
+    let lookfrom = Vector3::new(12.0, 1.5, 3.0);
+    let lookat = Vector3::new(0.0, 1.0, 0.0);
+    let distance_to_focus = (lookfrom - lookat).length();
+    let aperture = 0.1;
+    let camera = Camera::new(
+        lookfrom,
+        lookat,
+        Vector3::new(0.0, 1.0, 0.0),
+        20.0,
+        width_float / height_float,
+        aperture,
+        distance_to_focus,
+    );
+    render(width, height, camera, random_scene())
 }
