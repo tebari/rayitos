@@ -28,9 +28,11 @@ fn main() {
 }
 
 fn get_uint_or(number: Option<&String>, default: u32) -> u32 {
-    number
-        .map(|num_str| num_str.parse::<u32>().unwrap_or(default))
-        .unwrap_or(default)
+    let parsed_num = number.map(|num_str| num_str.parse::<u32>());
+    match parsed_num {
+        Some(Ok(num)) => num,
+        _ => default
+    }
 }
 
 fn write_to_file(filepath: &str, data: &String) -> Result<(), io::Error> {
