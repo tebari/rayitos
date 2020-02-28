@@ -1,5 +1,5 @@
 use crate::hittables::{Dielectric, Hittable, HittableList, Lambertian, Metal, Sphere};
-use crate::image::{color_float_to_u8, Image, Pixel};
+use crate::image::{color_float_to_u8, Image, Pixel, Tile};
 use crate::ray::Ray;
 use crate::rng::{random_f64, random_in_unit_sphere};
 use crate::vector::Vector3;
@@ -202,40 +202,61 @@ pub fn trio_sphere_scene() -> HittableList {
     ])
 }
 
-fn render(width: u32, height: u32, camera: Camera, world: HittableList) -> Image {
-    let mut image = Image::new(width, height);
+fn render_lines(width: u32, height: u32, camera: &Camera, world: &HittableList, tile: &mut Tile) {
     let aa_samples = 100;
     let aa_samples_f = aa_samples as f64;
-    let height_float = height as f64;
-    let width_float = width as f64;
+    let end_x = tile.start_x() + tile.image().get_height(); //offsetted width
+    let end_y = tile.start_y() + tile.image().get_width(); //offsetted height
 
-    for x in 0..height {
-        for y in 0..width {
+    for x in tile.start_x()..end_x {
+        for y in tile.start_y()..end_y {
             let mut color_vector = Vector3::new(0.0, 0.0, 0.0);
             let l = (height - x - 1) as f64;
             let c = y as f64;
             for _s in 0..aa_samples {
-                let u = (c + random_f64()) / width_float;
-                let v = (l + random_f64()) / height_float;
+                let u = (c + random_f64()) / width as f64;
+                let v = (l + random_f64()) / height as f64;
                 let r = camera.ray(u, v);
-                color_vector += color(&r, &world, 0);
+                color_vector += color(&r, world, 0);
             }
 
             let color_vector_aa = color_vector / aa_samples_f;
             let color_vector_gamma = color_vector_aa.square_root();
-            image.set(x, y, Pixel::from(color_vector_gamma));
+            tile.set(x, y, Pixel::from(color_vector_gamma));
         }
     }
+}
 
-    image
+fn render(width: u32, height: u32, camera: Camera, world: HittableList) -> Image {
+    let jobs = 32;
+
+    let lines_per_tile = height / jobs;
+    let tile_count = if height % jobs == 0 { jobs } else { jobs + 1 };
+
+    let mut tiles: Vec<Tile> = Vec::with_capacity(tile_count as usize);
+    for i in 0..tile_count {
+        let start_x = i * lines_per_tile;
+        let tile_height = if i < tile_count - 1 {
+            lines_per_tile
+        } else {
+            height - lines_per_tile * i
+        };
+        tiles.push(Tile::new(start_x, 0, width, tile_height));
+    }
+
+    tiles
+        .iter_mut()
+        .for_each(|tile| render_lines(width, height, &camera, &world, tile));
+
+    Image::from_tiles(width, height, tiles)
 }
 
 pub fn draw_trio(width: u32, height: u32) -> Image {
     let height_float = height as f64;
     let width_float = width as f64;
 
-    let lookfrom = Vector3::new(1.0, 3.0, 6.0);
-    let lookat = Vector3::new(0.0, 1.0, 0.0);
+    let lookfrom = Vector3::new(3.0, 3.0, 2.0);
+    let lookat = Vector3::new(0.0, 0.0, -1.0);
     let distance_to_focus = (lookfrom - lookat).length();
     let aperture = 2.0;
     let camera = Camera::new(

@@ -60,6 +60,24 @@ impl Image {
         }
     }
 
+    pub fn from_tiles(width: u32, height: u32, mut tiles: Vec<Tile>) -> Image {
+        // This assumes that tiles are sequential
+        let capacity = width * height;
+        let mut pixelmap: Vec<Pixel> = Vec::with_capacity(capacity as usize);
+
+        tiles.reverse();
+        while let Some(tile) = tiles.pop() {
+            let mut pixel = tile.extract_image().pixelmap;
+            pixelmap.append(&mut pixel);
+        }
+
+        Image {
+            width,
+            height,
+            pixelmap,
+        }
+    }
+
     fn xy_to_index(&self, x: u32, y: u32) -> usize {
         (x * self.width + y) as usize
     }
@@ -92,5 +110,41 @@ impl IntoIterator for Image {
 
     fn into_iter(self) -> Self::IntoIter {
         self.pixelmap.into_iter()
+    }
+}
+
+pub struct Tile {
+    start_x: u32,
+    start_y: u32,
+    image: Image,
+}
+
+impl Tile {
+    pub fn new(start_x: u32, start_y: u32, width: u32, height: u32) -> Tile {
+        Tile {
+            start_x,
+            start_y,
+            image: Image::new(width, height),
+        }
+    }
+
+    pub fn image(&self) -> &Image {
+        &self.image
+    }
+
+    pub fn set(&mut self, x: u32, y: u32, pixel: Pixel) {
+        self.image.set(x - self.start_x, y - self.start_y, pixel);
+    }
+
+    pub fn start_x(&self) -> u32 {
+        self.start_x
+    }
+
+    pub fn start_y(&self) -> u32 {
+        self.start_y
+    }
+
+    pub fn extract_image(self) -> Image {
+        self.image
     }
 }
