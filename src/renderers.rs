@@ -245,7 +245,7 @@ fn multithread_render(
         let camera = Arc::clone(&camera);
         let world = Arc::clone(&world);
         let handle = thread::Builder::new()
-            .name(format!("rayito-worker-{}", i))
+            .name(format!("rayito-wrk-{}", i))
             .spawn(move || loop {
                 let tile = {
                     let mut iter = tiles_iter.lock().unwrap();
