@@ -3,6 +3,9 @@ use crate::image::{color_float_to_u8, Image, Pixel, Tile};
 use crate::ray::Ray;
 use crate::rng::{random_f64, random_in_unit_sphere};
 use crate::vector::Vector3;
+use num_cpus;
+use std::sync::{Arc, Mutex};
+use std::thread;
 
 pub fn draw_blank(width: u32, height: u32) -> Image {
     Image::new(width, height)
@@ -100,13 +103,12 @@ fn color(ray: &Ray, world: &dyn Hittable, depth: u8) -> Vector3 {
 }
 
 pub fn random_scene() -> HittableList {
-    let n = 500;
-    let mut list: Vec<Box<dyn Hittable>> = Vec::with_capacity(n + 1);
-    list.push(Box::new(Sphere::new(
+    let mut world = HittableList::new();
+    world.add(Sphere::new(
         Vector3::new(0.0, -1000.0, 0.0),
         1000.0,
         Box::new(Lambertian::from(Vector3::new(0.5, 0.5, 0.5))),
-    )));
+    ));
     for a in -11..11 {
         for b in -11..11 {
             let choose_mat = random_f64();
@@ -118,7 +120,7 @@ pub fn random_scene() -> HittableList {
             if (center - Vector3::new(4.0, 0.2, 0.0)).length() > 0.9 {
                 if choose_mat < 0.8 {
                     //diffuse
-                    list.push(Box::new(Sphere::new(
+                    world.add(Sphere::new(
                         center,
                         0.2,
                         Box::new(Lambertian::from(Vector3::new(
@@ -126,10 +128,10 @@ pub fn random_scene() -> HittableList {
                             random_f64() * random_f64(),
                             random_f64() * random_f64(),
                         ))),
-                    )));
+                    ));
                 } else if choose_mat < 0.95 {
                     //metal
-                    list.push(Box::new(Sphere::new(
+                    world.add(Sphere::new(
                         center,
                         0.2,
                         Box::new(Metal::new(
@@ -140,66 +142,62 @@ pub fn random_scene() -> HittableList {
                             ),
                             0.5 * random_f64(),
                         )),
-                    )));
+                    ));
                 } else {
                     //glass
-                    list.push(Box::new(Sphere::new(
-                        center,
-                        0.2,
-                        Box::new(Dielectric::new(1.5)),
-                    )));
+                    world.add(Sphere::new(center, 0.2, Box::new(Dielectric::new(1.5))));
                 }
             }
         }
     }
 
-    list.push(Box::new(Sphere::new(
+    world.add(Sphere::new(
         Vector3::new(0.0, 1.0, 0.0),
         1.0,
         Box::new(Dielectric::new(1.5)),
-    )));
-    list.push(Box::new(Sphere::new(
+    ));
+    world.add(Sphere::new(
         Vector3::new(-4.0, 1.0, 0.0),
         1.0,
         Box::new(Lambertian::from(Vector3::new(0.4, 0.2, 0.1))),
-    )));
-    list.push(Box::new(Sphere::new(
+    ));
+    world.add(Sphere::new(
         Vector3::new(4.0, 1.0, 0.0),
         1.0,
         Box::new(Metal::new(Vector3::new(0.7, 0.6, 0.5), 0.0)),
-    )));
+    ));
 
-    HittableList::new(list)
+    world
 }
 
 pub fn trio_sphere_scene() -> HittableList {
-    HittableList::new(vec![
-        Box::new(Sphere::new(
-            Vector3::new(0.0, 0.0, -1.0),
-            0.5,
-            Box::new(Lambertian::from(Vector3::new(0.1, 0.2, 0.5))),
-        )),
-        Box::new(Sphere::new(
-            Vector3::new(0.0, -100.5, -1.0),
-            100.0,
-            Box::new(Lambertian::from(Vector3::new(0.8, 0.8, 0.0))),
-        )),
-        Box::new(Sphere::new(
-            Vector3::new(1.0, 0.0, -1.0),
-            0.5,
-            Box::new(Metal::new(Vector3::new(0.8, 0.6, 0.2), 0.3)),
-        )),
-        Box::new(Sphere::new(
-            Vector3::new(-1.0, 0.0, -1.0),
-            0.5,
-            Box::new(Dielectric::new(1.5)),
-        )),
-        Box::new(Sphere::new(
-            Vector3::new(-1.0, 0.0, -1.0),
-            -0.45,
-            Box::new(Dielectric::new(1.5)),
-        )),
-    ])
+    let mut world = HittableList::new();
+    world.add(Sphere::new(
+        Vector3::new(0.0, 0.0, -1.0),
+        0.5,
+        Box::new(Lambertian::from(Vector3::new(0.1, 0.2, 0.5))),
+    ));
+    world.add(Sphere::new(
+        Vector3::new(0.0, -100.5, -1.0),
+        100.0,
+        Box::new(Lambertian::from(Vector3::new(0.8, 0.8, 0.0))),
+    ));
+    world.add(Sphere::new(
+        Vector3::new(1.0, 0.0, -1.0),
+        0.5,
+        Box::new(Metal::new(Vector3::new(0.8, 0.6, 0.2), 0.3)),
+    ));
+    world.add(Sphere::new(
+        Vector3::new(-1.0, 0.0, -1.0),
+        0.5,
+        Box::new(Dielectric::new(1.5)),
+    ));
+    world.add(Sphere::new(
+        Vector3::new(-1.0, 0.0, -1.0),
+        -0.45,
+        Box::new(Dielectric::new(1.5)),
+    ));
+    world
 }
 
 fn render_lines(width: u32, height: u32, camera: &Camera, world: &HittableList, tile: &mut Tile) {
@@ -227,6 +225,56 @@ fn render_lines(width: u32, height: u32, camera: &Camera, world: &HittableList, 
     }
 }
 
+fn multithread_render(
+    width: u32,
+    height: u32,
+    camera: Camera,
+    world: HittableList,
+    tiles: Vec<Tile>,
+) -> Vec<Tile> {
+    let num_cpus = num_cpus::get();
+    let tiles_iter = Arc::new(Mutex::new(tiles.into_iter()));
+    let rendered_tiles = Arc::new(Mutex::new(vec![]));
+    let camera = Arc::new(camera);
+    let world = Arc::new(world);
+
+    let mut handles = vec![];
+    for i in 0..num_cpus {
+        let tiles_iter = Arc::clone(&tiles_iter);
+        let rendered_tiles = Arc::clone(&rendered_tiles);
+        let camera = Arc::clone(&camera);
+        let world = Arc::clone(&world);
+        let handle = thread::Builder::new()
+            .name(format!("rayito-worker-{}", i))
+            .spawn(move || loop {
+                let tile = {
+                    let mut iter = tiles_iter.lock().unwrap();
+                    iter.next()
+                };
+                match tile {
+                    Some(mut tile) => {
+                        render_lines(width, height, &camera, &world, &mut tile);
+                        rendered_tiles.lock().unwrap().push(tile);
+                    }
+                    _ => break,
+                }
+            })
+            .unwrap();
+        handles.push(handle);
+    }
+
+    for handle in handles {
+        handle.join().unwrap();
+    }
+
+    let tiles = Arc::try_unwrap(rendered_tiles);
+    if let Ok(tiles) = tiles {
+        tiles.into_inner().unwrap()
+    } else {
+        panic!("Tiles still held by worker threads");
+    }
+}
+
 fn render(width: u32, height: u32, camera: Camera, world: HittableList) -> Image {
     let jobs = 32;
 
@@ -244,10 +292,11 @@ fn render(width: u32, height: u32, camera: Camera, world: HittableList) -> Image
         tiles.push(Tile::new(start_x, 0, width, tile_height));
     }
 
-    tiles
-        .iter_mut()
-        .for_each(|tile| render_lines(width, height, &camera, &world, tile));
+    // tiles
+    //     .iter_mut()
+    //     .for_each(|tile| render_lines(width, height, &camera, &world, tile));
 
+    let tiles = multithread_render(width, height, camera, world, tiles);
     Image::from_tiles(width, height, tiles)
 }
 

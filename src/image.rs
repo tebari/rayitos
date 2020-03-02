@@ -61,7 +61,9 @@ impl Image {
     }
 
     pub fn from_tiles(width: u32, height: u32, mut tiles: Vec<Tile>) -> Image {
-        // This assumes that tiles are sequential
+        // Sort tiles by starting line
+        tiles.sort_by(|t1, t2| t1.start_x().cmp(&t2.start_x()));
+
         let capacity = width * height;
         let mut pixelmap: Vec<Pixel> = Vec::with_capacity(capacity as usize);
 

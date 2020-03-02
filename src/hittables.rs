@@ -142,6 +142,9 @@ impl Sphere {
     }
 }
 
+unsafe impl Send for Sphere {}
+unsafe impl Sync for Sphere {}
+
 impl Hittable for Sphere {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         let oc = ray.origin() - self.center;
@@ -176,12 +179,16 @@ impl Hittable for Sphere {
 }
 
 pub struct HittableList {
-    list: Vec<Box<dyn Hittable>>,
+    list: Vec<Box<dyn Hittable + Send + Sync>>,
 }
 
 impl HittableList {
-    pub fn new(list: Vec<Box<dyn Hittable>>) -> HittableList {
-        HittableList { list }
+    pub fn new() -> HittableList {
+        HittableList { list: vec![] }
+    }
+
+    pub fn add<T: Hittable + Send + Sync + 'static>(&mut self, hittable: T) {
+        self.list.push(Box::new(hittable));
     }
 }
 

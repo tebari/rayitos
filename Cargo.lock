@@ -27,10 +27,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "hermit-abi"
+version = "0.1.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1010591b26bbfe835e9faeabeb11866061cc7dcebffd56ad7d0942d0e61aefd8"
+dependencies = [
+ "libc",
+]
+
+[[package]]
 name = "libc"
 version = "0.2.67"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "eb147597cdf94ed43ab7a9038716637d2d1bf2bc571da995d0028dec06bd3018"
+
+[[package]]
+name = "num_cpus"
+version = "1.12.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "46203554f085ff89c235cd12f7075f3233af9b11ed7c9e16dfe2560d03313ce6"
+dependencies = [
+ "hermit-abi",
+ "libc",
+]
 
 [[package]]
 name = "ppv-lite86"
@@ -83,6 +102,7 @@ dependencies = [
 name = "rayitos"
 version = "0.0.1"
 dependencies = [
+ "num_cpus",
  "rand",
 ]
 
