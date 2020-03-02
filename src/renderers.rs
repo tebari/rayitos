@@ -325,9 +325,9 @@ pub fn draw_random(width: u32, height: u32) -> Image {
     let width_float = width as f64;
 
     let lookfrom = Vector3::new(12.0, 1.5, 3.0);
-    let lookat = Vector3::new(0.0, 1.0, 0.0);
+    let lookat = Vector3::new(0.0, 0.3, 0.0);
     let distance_to_focus = (lookfrom - lookat).length();
-    let aperture = 0.1;
+    let aperture = 0.05;
     let camera = Camera::new(
         lookfrom,
         lookat,
