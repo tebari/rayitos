@@ -56,8 +56,8 @@ impl Camera {
         let theta = vfov * std::f64::consts::PI / 180.0;
         let half_height = (theta / 2.0).tan();
         let half_width = aspect * half_height;
-        let w = (lookfrom - lookat).make_unit_vector();
-        let u = vup.cross(w).make_unit_vector();
+        let w = (lookfrom - lookat).unit_vector();
+        let u = vup.cross(w).unit_vector();
         let v = w.cross(u);
         let lower_left_corner =
             lookfrom - half_width * focus_dist * u - half_height * focus_dist * v - focus_dist * w;
@@ -95,7 +95,7 @@ fn color(ray: &Ray, world: &dyn Hittable, depth: u8) -> Vector3 {
             }
         }
         None => {
-            let unit_direction = ray.direction().make_unit_vector();
+            let unit_direction = ray.direction().unit_vector();
             let t = 0.5 * (unit_direction.y() + 1.0);
             (1.0 - t) * Vector3::new(1.0, 1.0, 1.0) + t * Vector3::new(0.5, 0.7, 1.0)
         }
@@ -276,10 +276,10 @@ fn multithread_render(
 }
 
 fn render(width: u32, height: u32, camera: Camera, world: HittableList) -> Image {
-    let jobs = 32;
+    let lines_per_tile = 10;
+    let tile_count = height / lines_per_tile;
 
-    let lines_per_tile = height / jobs;
-    let tile_count = if height % jobs == 0 { jobs } else { jobs + 1 };
+    let tile_count = if height % tile_count == 0 { tile_count } else { tile_count + 1 };
 
     let mut tiles: Vec<Tile> = Vec::with_capacity(tile_count as usize);
     for i in 0..tile_count {

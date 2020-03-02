@@ -33,7 +33,7 @@ impl Vector3 {
     }
 
     pub fn unit_vector(self) -> Vector3 {
-        self / 3.0
+        self / self.length()
     }
 
     pub fn dot(self, rhs: Vector3) -> f64 {
